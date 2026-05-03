@@ -3,6 +3,7 @@
 
 
 
+
 import sys
 import os   
 import threading
@@ -28,8 +29,8 @@ from PyQt6.QtGui import QColor, QPainter, QPen, QShortcut, QKeySequence, QImage,
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-MODEL_NAME = "gemini-3-flash-preview:cloud"
-NFS_DECRYPT_MODEL_NAME = "gemini-3-flash-preview:cloud"
+MODEL_NAME = "qwen3-vl:235b-instruct-cloud"
+NFS_DECRYPT_MODEL_NAME = "qwen3-vl:235b-instruct-cloud"
 REALTIME_MODE_SCRIPT = r"C:\Users\admin\OneDrive\Desktop\Projects\Sample.py"
 MICROBOT_SCRIPT = r"C:\Users\admin\OneDrive\Desktop\Projects\SDFG.py"
 AUTOBOT_SCRIPT = r"C:\Users\admin\OneDrive\Desktop\Projects\ENT.py"
@@ -51,6 +52,64 @@ VISION_IN_SYSTEM_PROMPT = (
     "Prioritize the latest image as the current view.\n"
     "Reply quickly in one short line or a medium-length sentence describing only what is visible on screen."
 )
+
+GMAIL_AGENT_PROMPT = """
+You are a Gmail Automation Agent.
+
+Purpose:
+Perform Gmail sending operations only using Python and yagmail.
+
+Rules:
+
+1. Never ask unnecessary questions.
+
+2. If recipient email is missing, ask only:
+'Recipient Gmail address?'
+
+3. If recipient exists, immediately generate and execute Gmail sending code.
+
+4. Never explain the code.
+
+5. Never provide extra conversation.
+
+6. Output only executable Python code.
+
+7. Use yagmail library only.
+
+8. Always use this structure:
+
+import yagmail
+
+yag = yagmail.SMTP("vishwadeep2026@gmail.com", "miftvgquwmgymuyh")
+
+yag.send(
+    to=RECIPIENT,
+    subject=SUBJECT,
+    contents=CONTENT
+)
+
+print("Email sent!")
+
+9. Used strictly for:
+- Sending emails
+- Gmail notifications
+- Gmail automation
+
+10. Do not perform any task unrelated to Gmail operations.
+
+Behavior:
+
+If user says:
+"Send hello to abc@gmail.com"
+
+Output only Python code.
+
+If user says:
+"Send mail"
+
+Reply only:
+Recipient Gmail address?
+"""
 
 with open(r"C:\Users\admin\OneDrive\Desktop\AI\JARVIS_BEHAVE.txt", "r", encoding="utf-8") as f:
     behavior = f.read()
@@ -216,7 +275,8 @@ class MainUI(QWidget):
             Qt.WindowType.WindowMaximizeButtonHint |
             Qt.WindowType.WindowCloseButtonHint
         )
-        self.setWindowTitle(" J A R V I S ")
+        self.setWindowTitle(" E N T I T Y ")
+        self.setWindowIcon(QIcon(r"D:\R1.ico"))
         self.background_image_path = r"C:\Users\admin\OneDrive\Desktop\JARVIS-2026\UI-JARVIS.png"
         self.background_pixmap = QPixmap(self.background_image_path)
 
@@ -710,7 +770,7 @@ class MainUI(QWidget):
             print(f"✅ File encrypted: {output_path}")
             # Append to Decrypt_behave2.txt
             with open(r"C:\Users\admin\OneDrive\Desktop\AI\NFS-AI\Decrypt_behave2.txt", "a") as f:
-                f.write(f"{output_path} - {password}\n")
+                f.write(f"\n\nPath: {output_path}\nPassword: {password}\n\n")
             return True
 
         response5 = ollama.chat(
@@ -1024,6 +1084,22 @@ class MainUI(QWidget):
             signals.reply.emit(parts[0])
             print("Processing vision-based_IN response...")
             self.capture_screenshot_and_send()
+
+        elif "@#eggyiop" in response:
+            print("Processing gmail response...")
+            parts = response.split("@#eggyiop", 1)
+            signals.reply.emit(parts[0])
+            response_ai = ollama.chat(
+                model=MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": GMAIL_AGENT_PROMPT},
+                    {"role": "user", "content": self.user_box.toPlainText().strip()}
+                ]
+            )
+            ai_reply = response_ai["message"]["content"].strip()
+            exec(ai_reply)
+            signals.reply.emit('Processed sir')
+            print("Processing gmail response...")
 
         elif "@#evvyiop" in response:
             print("Processing vision-based response...")
